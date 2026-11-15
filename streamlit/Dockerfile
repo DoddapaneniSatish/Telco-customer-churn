@@ -9,11 +9,11 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # 1. Install Python dependencies
-COPY requirements.txt .
+COPY streamlit/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # 2. Copy Streamlit app
-COPY app.py data_schema.json ./
+COPY streamlit/app.py streamlit/data_schema.json ./
 
 
 EXPOSE 8501
