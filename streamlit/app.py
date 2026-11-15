@@ -131,6 +131,25 @@ st.markdown("---")
 # -----------------------------------------------------------------------------
 # Predict Button
 # -----------------------------------------------------------------------------
+def api_error_message(response):
+    """Classify a rejected response without exposing provider HTML or tokens."""
+    content_type = response.headers.get("content-type", "").lower()
+    body = response.text[:8192].lower() if "json" not in content_type else ""
+    challenged = response.headers.get("cf-mitigated", "").lower() == "challenge"
+    challenged = challenged or "challenges.cloudflare.com" in body or "_cf_chl" in body
+    if challenged:
+        return (
+            "The API hosting provider requires browser verification for this connection. "
+            "The prediction could not be completed. The site owner needs to resolve "
+            "the server-to-server API access with the hosting provider."
+        )
+    if response.status_code == 429:
+        return "The prediction service is temporarily limiting requests. Please wait before trying again."
+    if response.status_code != 200:
+        return f"The prediction service is unavailable (HTTP {response.status_code}). Please try again later."
+    return None
+
+
 if st.button("🔮 Predict Churn", type="primary"):
     payload = {"instances": [user_input]}
 
@@ -138,12 +157,17 @@ if st.button("🔮 Predict Churn", type="primary"):
         try:
             resp = requests.post(PREDICT_ENDPOINT, json=payload, timeout=30)
         except requests.exceptions.RequestException as e:
-            st.error(f"❌ Request to API failed: {e}")
+            st.error("Could not reach the prediction service. It may be starting up. Please try again shortly.")
         else:
-            if resp.status_code != 200:
-                st.error(f"❌ API error: HTTP {resp.status_code} - {resp.text}")
+            message = api_error_message(resp)
+            if message:
+                st.error(message)
             else:
-                data = resp.json()
+                try:
+                    data = resp.json()
+                except ValueError:
+                    st.error("The prediction service returned an unexpected response. Please try again later.")
+                    st.stop()
 
                 churn_preds = data.get("churn_prediction", [])
                 churn_probs = data.get("churn_probability", [])
