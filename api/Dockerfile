@@ -10,7 +10,6 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY app.py .
-COPY housing_pipeline.py .
 
 # ✅ COPY MODEL FILE
 COPY models/telco_churn_best_model.pkl /app/models/

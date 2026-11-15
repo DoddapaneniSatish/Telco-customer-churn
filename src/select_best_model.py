@@ -40,6 +40,9 @@ def main():
 
     # Copy model for deployment
     shutil.copyfile(source_model, BEST_MODEL_PATH)
+    api_model_path = ROOT / "api" / "models" / BEST_MODEL_PATH.name
+    api_model_path.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(source_model, api_model_path)
 
     # Save metadata
     BEST_META_PATH.write_text(

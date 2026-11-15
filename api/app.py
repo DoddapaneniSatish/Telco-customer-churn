@@ -4,19 +4,20 @@ FastAPI service for Telco Customer Churn prediction.
 Loads the trained classification pipeline and exposes a /predict endpoint.
 """
 
+import os
 from pathlib import Path
 from typing import Any, Dict, List
 
 import joblib
 import pandas as pd
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 # -----------------------------------------------------------------------------
 # Configuration
 # -----------------------------------------------------------------------------
-MODEL_PATH = Path("/app/models/telco_churn_best_model.pkl")
+MODEL_PATH = Path(os.environ.get("MODEL_PATH", Path(__file__).resolve().parent / "models" / "telco_churn_best_model.pkl"))
 
 app = FastAPI(
     title="Telco Customer Churn Prediction API",
@@ -53,8 +54,7 @@ class PredictRequest(BaseModel):
     """
     instances: List[Dict[str, Any]]
 
-    class Config:
-        schema_extra = {
+    model_config = ConfigDict(json_schema_extra={
             "example": {
                 "instances": [
                     {
@@ -80,7 +80,7 @@ class PredictRequest(BaseModel):
                     }
                 ]
             }
-        }
+        })
 
 
 class PredictResponse(BaseModel):
@@ -153,12 +153,14 @@ def predict(request: PredictRequest):
         "streaming_movies",
     ]
 
-    missing = set(required_columns) - set(X.columns)
-    if missing:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Missing required columns: {sorted(missing)}",
-        )
+    for index, instance in enumerate(request.instances):
+        missing = set(required_columns) - set(instance)
+        nulls = [name for name in required_columns if name in instance and instance[name] is None]
+        if missing or nulls:
+            raise HTTPException(
+                status_code=400,
+                detail={"instance": index, "missing_features": sorted(missing), "null_features": nulls},
+            )
 
     try:
         preds = model.predict(X)

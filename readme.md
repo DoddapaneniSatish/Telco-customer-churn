@@ -1,378 +1,106 @@
-# Telco Customer Churn Prediction System
+# Telco Customer Churn — From SQL Data to a Prediction App
 
-## 📌 Project Overview
+A portfolio project exploring which customer profiles are associated with churn. A saved preprocessing and LightGBM pipeline is served through FastAPI and an interactive Streamlit form. The goal is to demonstrate data preparation, model comparison, and reproducible application delivery.
 
-This project is an end-to-end Machine Learning system for predicting customer churn using the **Telco Customer Churn Dataset**.
+## What is implemented
 
-The project includes:
+- SQLite customer/service/billing dimensions joined to churn observations with SQL.
+- Four numeric and fifteen categorical features; scaling and one-hot encoding inside the fitted pipeline.
+- Sixteen experiment configurations: logistic regression, random forest, XGBoost, and LightGBM, each with/without PCA and with/without Optuna tuning.
+- Batch prediction API, interactive customer form, health endpoints, and separate Docker images.
+- Optional MLflow/DagsHub tracking. Credentials are not needed to run inference.
 
-- Data preprocessing
-- SQLite normalized database (3NF)
-- SQL joins with Pandas
-- Exploratory Data Analysis (EDA)
-- Multiple ML experiments
-- PCA dimensionality reduction
-- Hyperparameter tuning
-- MLflow + DagsHub experiment tracking
-- FastAPI model serving
-- Streamlit frontend
-- Docker containerization
-- Cloud deployment using Render
+## Run the saved model locally
 
----
-
-# 📂 Project Structure
+Use Python 3.12. The deployment artifact was serialized with scikit-learn 1.8.0; the API requirements match that version. Only load model artifacts from sources you trust.
 
 ```bash
-housing_app_fall25/
-│
-├── api/                     # FastAPI backend
-│   ├── app.py
-│   ├── Dockerfile
-│   ├── requirements.txt
-│   └── housing_pipeline.py
-│
-├── streamlit/               # Streamlit frontend
-│   ├── app.py
-│   ├── Dockerfile
-│   └── requirements.txt
-│
-├── data/
-│   ├── raw/                 # Raw dataset
-│   ├── processed/
-│   ├── db/
-│   └── data_schema.json
-│
-├── models/                  # Saved ML models
-│
-├── metrics/                 # Experiment results
-│
-├── notebooks/               # Jupyter notebooks
-│
-├── src/                     # ML pipeline source code
-│
-├── docker-compose.yml
-└── README.md
-```
-
----
-
-# 📊 Dataset
-
-Dataset: **Telco Customer Churn**
-
-The dataset contains customer demographic information, service usage, billing information, and churn labels.
-
-### Target Variable
-
-- `Churn`
-  - Yes = customer left
-  - No = customer stayed
-
----
-
-# 🗄 Database Design (3NF)
-
-A normalized SQLite database was created using:
-
-- Dimension tables
-- Fact table
-- Foreign key relationships
-
-### Purpose
-
-- Reduce redundancy
-- Improve data integrity
-- Enable SQL joins for analytics
-
----
-
-# 🔍 Exploratory Data Analysis
-
-Performed:
-- Correlation analysis
-- Missing value analysis
-- Feature distributions
-- Class imbalance analysis
-- ydata-profiling report
-
-### Observations
-
-- Dataset was slightly imbalanced
-- Some categorical features had dominant classes
-- Numerical features required scaling
-
----
-
-# ⚙️ Machine Learning Experiments
-
-## Models Used
-
-- Logistic Regression
-- Ridge Classifier
-- Random Forest
-- XGBoost
-- LightGBM
-
----
-
-# 🧠 PCA (Principal Component Analysis)
-
-PCA was used for dimensionality reduction.
-
-### Purpose
-
-- Reduce feature dimensionality
-- Remove redundancy
-- Improve generalization
-
-Experiments were performed:
-- With PCA
-- Without PCA
-
----
-
-# 🔧 Hyperparameter Tuning
-
-Hyperparameter tuning was performed using:
-- Grid Search / Optuna
-
-### Metrics Logged
-
-- F1-score
-- Precision
-- Recall
-- Confusion Matrix
-
----
-
-# 📈 Experiment Tracking
-
-MLflow + DagsHub were used for experiment tracking.
-
-Tracked:
-- Parameters
-- Metrics
-- Model artifacts
-- Best models
-
----
-
-# 🏆 Best Model
-
-### Best Performing Model
-
-- **LightGBM**
-- PCA Disabled
-- Hyperparameter Tuned
-
-### Metric
-
-Highest F1-score among all experiments.
-
-Saved as:
-
-```bash
-models/global_best_model.pkl
-```
-
----
-
-# 🚀 FastAPI Backend
-
-The FastAPI backend serves predictions using the trained model.
-
-## Endpoints
-
-### Health Check
-
-```http
-GET /health
-```
-
-### Prediction Endpoint
-
-```http
-POST /predict
-```
-
----
-
-# 🎨 Streamlit Frontend
-
-The Streamlit application provides:
-- User-friendly UI
-- Real-time predictions
-- API integration
-
----
-
-# 🐳 Docker Containerization
-
-Both services were containerized using Docker.
-
-### Services
-
-- FastAPI API
-- Streamlit UI
-
-Managed using:
-
-```bash
-docker-compose up --build
-```
-
----
-
-# ☁️ Cloud Deployment
-
-Deployed on:
-- Render
-
-### Deployed Services
-
-- FastAPI backend
-- Streamlit frontend
-
----
-
-# 🛠 Technologies Used
-
-## Programming
-- Python
-
-## ML Libraries
-- scikit-learn
-- XGBoost
-- LightGBM
-- pandas
-- numpy
-
-## Backend
-- FastAPI
-
-## Frontend
-- Streamlit
-
-## Database
-- SQLite
-
-## DevOps
-- Docker
-- Docker Compose
-- Render
-
-## Experiment Tracking
-- MLflow
-- DagsHub
-
----
-
-# ▶️ Running Locally
-
-## 1. Clone Repository
-
-```bash
-git clone https://github.com/santhosh-madha/housing_app_fall25.git
-cd housing_app_fall25
-```
-
----
-
-## 2. Create Virtual Environment
-
-```bash
+git clone https://github.com/DoddapaneniSatish/Telco-customer-churn.git
+cd Telco-customer-churn
 python -m venv .venv
-```
-
-### Activate Environment
-
-#### Windows
-
-```bash
-.venv\Scripts\activate
-```
-
-#### Linux/Mac
-
-```bash
 source .venv/bin/activate
+# Windows PowerShell: .venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+python test_inference.py
+python -m uvicorn api.app:app --host 127.0.0.1 --port 8000
 ```
 
----
+Open http://localhost:8000/docs to try a prediction using the included 19-feature example. The request is `{"instances": [{...customer features...}]}` and the response contains `churn_prediction`, `churn_probability`, and `count`. Class `1` means churn. Each record must contain all required features without null values; invalid types and out-of-domain values need further validation.
 
-## 3. Install Dependencies
+In another terminal, activate the same environment and launch the frontend:
 
 ```bash
-pip install -r requirements.txt
+API_URL=http://localhost:8000 python -m streamlit run streamlit/app.py
+# Windows PowerShell:
+# $env:API_URL = 'http://localhost:8000'
+# python -m streamlit run streamlit/app.py
 ```
 
----
+Open http://localhost:8501. Set `API_URL` to use a different backend. Without it, the UI preserves the existing hosted API as a fallback. An optional `MODEL_PATH` overrides the API artifact path; the default is `api/models/telco_churn_best_model.pkl` relative to the application file, independent of the working directory.
 
-## 4. Start Docker Services
+## Docker and Render
 
 ```bash
-docker-compose up --build
+docker compose up --build
 ```
 
----
+The UI is at http://localhost:8501 and the API documentation at http://localhost:8000/docs. Compose waits for the API health check and supplies the internal backend URL. Both images include their runtime model/schema files and do not require host data volumes.
 
-# 🌐 Access Applications
+`render.yaml` defines two Docker services. The API builds from the `api` directory. The frontend builds from the repository root using `streamlit/Dockerfile`, matching the existing Render frontend settings; `.dockerignore` limits that context to frontend files. When creating the Blueprint, set the frontend's `API_URL` to the actual public URL assigned to the API service. Do not assume a hostname from the service name. For an existing deployment, update that environment variable in Render before switching to the corrected configuration. Hosting availability and limits depend on your Render account and plan.
 
-## FastAPI
+## Recorded model comparison
 
-```text
-http://localhost:8000/docs
+The committed experiment files record the following results on a 1,409-row split of the 7,043-customer dataset:
+
+| Configuration | Churn F1 |
+| --- | ---: |
+| Logistic regression, no PCA, untuned | 0.6136 |
+| Random forest, no PCA, tuned | 0.6284 |
+| XGBoost, no PCA, tuned | 0.5870 |
+| LightGBM, no PCA, tuned (selected) | 0.6286 |
+
+For the selected run, recorded churn precision is **0.5336**, recall **0.7647**, and accuracy **0.7601**. Confusion counts are TN 785, FP 250, FN 88, TP 286. These are historical repository results, not a claim of business impact or a new benchmark.
+
+**Evaluation limitation:** all sixteen configurations were compared on the same outer split, and `src/select_best_model.py` selects the maximum F1 from that comparison. That split therefore participates in model selection; its winning score is not an independent final holdout estimate. A future evaluation should reserve an untouched test set, select models and thresholds using training/validation data, and measure calibration and subgroup errors before drawing deployment conclusions. The demo's model scores are not calibrated guarantees or causal explanations.
+
+## Verify changes
+
+```bash
+python -m pip install -r requirements-dev.txt
+python test_inference.py
+python -m pytest tests -q
 ```
 
-## Streamlit
+The tests exercise the actual saved model through the API, reject incomplete records within a batch, and run the Streamlit form against that API using only the files bundled into the frontend image. The GitHub Actions workflow builds and starts both Docker images, checks their health endpoints, and runs the actual Streamlit form against the API container. Live Render rollout remains a separate deployment check.
 
-```text
-http://localhost:8501
-```
+## Source map
 
----
+| Path | Purpose |
+| --- | --- |
+| `src/data_loader.py` | Load SQL joins and split features/target |
+| `src/preprocess.py` | Numeric/categorical preprocessing |
+| `src/experiments.py` | Experiment runner, PCA and tuning |
+| `src/select_best_model.py` | Select recorded best run and copy it to root and API artifact paths |
+| `metrics/` | Committed comparison and per-run reports |
+| `api/app.py`, `api/models/` | Serving code and deployment artifact |
+| `streamlit/app.py`, `streamlit/data_schema.json` | Customer form and bundled input defaults |
+| `tests/`, `test_inference.py` | Serving integration and inference checks |
 
-# 📌 Example Prediction Request
+Training is separate from serving: the experiment runner additionally requires Optuna, and remote tracking additionally requires MLflow plus a separately configured DagsHub credential. Never commit credentials. Selecting a model updates both `models/telco_churn_best_model.pkl` and the copy used by the API image. Older housing-named scripts/artifacts remain as legacy files and are not part of the Telco serving path.
 
-```json
-{
-  "instances": [
-    {
-      "gender": "Male",
-      "senior_citizen": "No",
-      "partner": "Yes",
-      "dependents": "No",
-      "tenure": 12,
-      "phone_service": "Yes",
-      "multiple_lines": "No",
-      "internet_service": "Fiber optic",
-      "online_security": "No",
-      "online_backup": "Yes",
-      "device_protection": "No",
-      "tech_support": "No",
-      "streaming_tv": "Yes",
-      "streaming_movies": "No",
-      "contract_type": "Month-to-month",
-      "paperless_billing": "Yes",
-      "payment_method": "Electronic check",
-      "monthly_charges": 70.35,
-      "total_charges": 845.5
-    }
-  ]
-}
-```
+## Next improvements
 
----
+1. Independent final holdout evaluation, threshold selection, and calibration analysis.
+2. Typed feature validation, batch limits, and clearer user-facing failure handling.
+3. An analysis of false positives/negatives and a reproducible comparison report with model provenance.
+4. A portfolio case study showing the data flow, tradeoffs, personal contribution, and measured results.
 
-# 📚 Key Learnings
+## Project origin
 
-- End-to-end ML pipeline development
-- Database normalization
-- Experiment tracking
-- Model deployment
-- Docker containerization
-- Cloud deployment
-- API development
+This repository is a fork of [mkzia/housing_app_fall25](https://github.com/mkzia/housing_app_fall25). The inherited housing scaffold explains the legacy files. The Telco-specific data, experiments, and serving changes are visible in this fork’s commit history.
 
----
+## Existing Render deployment verification
+
+The active `Telco-customer-churn-ml` API uses root directory `api`, Dockerfile `./Dockerfile`, and Docker context `.`. Its public backend is `https://telco-customer-churn-ml.onrender.com`. On 2026-11-15, its health endpoint and a sample churn prediction returned HTTP 200. This verifies the existing deployed version, not this pull request.
+
+The existing `telco-churn-streamlit` frontend uses the repository root, Dockerfile `streamlit/Dockerfile`, and Docker context `.`. It and the older duplicate frontend are user-suspended. A suspended frontend cannot serve a public demo until it is intentionally resumed and the updated version is deployed. Set its `API_URL` to the active backend above. The Blueprint keeps `API_URL` outside automatic synchronization so an existing manually configured value is preserved. The Blueprint names refer to the older two-service setup; review resource names before applying it to an existing account.
