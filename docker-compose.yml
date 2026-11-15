@@ -7,7 +7,9 @@ services:
       PYTHONUNBUFFERED: "1"
     restart: unless-stopped
   streamlit:
-    build: ./streamlit
+    build:
+      context: .
+      dockerfile: streamlit/Dockerfile
     ports:
       - "8501:8501"
     environment:

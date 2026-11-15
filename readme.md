@@ -46,7 +46,7 @@ docker compose up --build
 
 The UI is at http://localhost:8501 and the API documentation at http://localhost:8000/docs. Compose waits for the API health check and supplies the internal backend URL. Both images include their runtime model/schema files and do not require host data volumes.
 
-`render.yaml` defines two Docker services. When creating the Blueprint, set the frontend's `API_URL` to the actual public URL assigned to the API service. Do not assume a hostname from the service name. For an existing deployment, update that environment variable in Render before switching to the corrected configuration. Hosting availability and limits depend on your Render account and plan.
+`render.yaml` defines two Docker services. The API builds from the `api` directory. The frontend builds from the repository root using `streamlit/Dockerfile`, matching the existing Render frontend settings; `.dockerignore` limits that context to frontend files. When creating the Blueprint, set the frontend's `API_URL` to the actual public URL assigned to the API service. Do not assume a hostname from the service name. For an existing deployment, update that environment variable in Render before switching to the corrected configuration. Hosting availability and limits depend on your Render account and plan.
 
 ## Recorded model comparison
 
@@ -71,7 +71,7 @@ python test_inference.py
 python -m pytest tests -q
 ```
 
-The tests exercise the actual saved model through the API, reject incomplete records within a batch, and run the Streamlit form against that API using only the files bundled into the frontend image. Docker builds and live Render deployment require separate verification in those environments.
+The tests exercise the actual saved model through the API, reject incomplete records within a batch, and run the Streamlit form against that API using only the files bundled into the frontend image. The GitHub Actions workflow builds and starts both Docker images, checks their health endpoints, and runs the actual Streamlit form against the API container. Live Render rollout remains a separate deployment check.
 
 ## Source map
 
@@ -98,3 +98,9 @@ Training is separate from serving: the experiment runner additionally requires O
 ## Project origin
 
 This repository is a fork of [mkzia/housing_app_fall25](https://github.com/mkzia/housing_app_fall25). The inherited housing scaffold explains the legacy files. The Telco-specific data, experiments, and serving changes are visible in this fork’s commit history.
+
+## Existing Render deployment verification
+
+The active `Telco-customer-churn-ml` API uses root directory `api`, Dockerfile `./Dockerfile`, and Docker context `.`. Its public backend is `https://telco-customer-churn-ml.onrender.com`. On 2026-11-15, its health endpoint and a sample churn prediction returned HTTP 200. This verifies the existing deployed version, not this pull request.
+
+The existing `telco-churn-streamlit` frontend uses the repository root, Dockerfile `streamlit/Dockerfile`, and Docker context `.`. It and the older duplicate frontend are user-suspended. A suspended frontend cannot serve a public demo until it is intentionally resumed and the updated version is deployed. Set its `API_URL` to the active backend above. The Blueprint keeps `API_URL` outside automatic synchronization so an existing manually configured value is preserved. The Blueprint names refer to the older two-service setup; review resource names before applying it to an existing account.

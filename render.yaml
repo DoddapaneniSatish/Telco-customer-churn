@@ -14,7 +14,7 @@ services:
     runtime: docker
     plan: free
     dockerfilePath: ./streamlit/Dockerfile
-    dockerContext: ./streamlit
+    dockerContext: .
     healthCheckPath: /_stcore/health
     envVars:
       - key: PORT
