@@ -1,35 +1,23 @@
 services:
-  # -------------------------------
-  # FastAPI backend (Telco Churn)
-  # -------------------------------
- services:
   - type: web
     name: telco-churn-api
-    env: docker
+    runtime: docker
     plan: free
-
-    dockerfilePath: api/Dockerfile
-    dockerContext: api   # 🔥 THIS IS THE FIX
-
-    autoDeploy: true
+    dockerfilePath: ./api/Dockerfile
+    dockerContext: ./api
     healthCheckPath: /health
-
     envVars:
       - key: PORT
         value: 8000
-
-    
-
-  # -------------------------------
-  # Streamlit frontend
-  # -------------------------------
   - type: web
     name: telco-churn-streamlit
-    env: docker
+    runtime: docker
     plan: free
-    dockerfilePath: streamlit/Dockerfile
-    dockerContext: .
-    autoDeploy: true
+    dockerfilePath: ./streamlit/Dockerfile
+    dockerContext: ./streamlit
+    healthCheckPath: /_stcore/health
     envVars:
+      - key: PORT
+        value: 8501
       - key: API_URL
-        value: https://telco-churn-api.onrender.com
+        sync: false
