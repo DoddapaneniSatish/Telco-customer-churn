@@ -1,4 +1,5 @@
 import json
+import os
 from pathlib import Path
 from typing import Any, Dict
 
@@ -15,13 +16,13 @@ st.set_page_config(
 )
 
 # -----------------------------------------------------------------------------
-# Config (CLOUD ONLY)
+# Configuration
 # -----------------------------------------------------------------------------
 BASE_DIR = Path(__file__).resolve().parent
 SCHEMA_PATH = BASE_DIR / "data_schema.json"
 
-# ✅ Render API (ONLY)
-API_BASE_URL = "https://telco-customer-churn-ml.onrender.com"
+# Keep the existing hosted API as the fallback; local/Compose runs set API_URL.
+API_BASE_URL = os.environ.get("API_URL", "https://telco-customer-churn-ml.onrender.com").rstrip("/")
 PREDICT_ENDPOINT = f"{API_BASE_URL}/predict"
 
 # -----------------------------------------------------------------------------
@@ -45,8 +46,8 @@ categorical_features = schema.get("categorical", {})
 # -----------------------------------------------------------------------------
 st.title("📞 Telco Customer Churn Prediction App")
 st.write(
-    f"This app sends your inputs to the FastAPI backend deployed on **Render**:\n\n"
-    f"🔗 `{API_BASE_URL}`"
+    "Explore how a customer profile changes a model’s churn estimate. "
+    "This educational demo supports investigation; it does not establish why a customer leaves."
 )
 
 st.header("Input Customer Features")
@@ -133,7 +134,7 @@ st.markdown("---")
 if st.button("🔮 Predict Churn", type="primary"):
     payload = {"instances": [user_input]}
 
-    with st.spinner("Calling Render API for prediction..."):
+    with st.spinner("Estimating churn..."):
         try:
             resp = requests.post(PREDICT_ENDPOINT, json=payload, timeout=30)
         except requests.exceptions.RequestException as e:
@@ -159,22 +160,23 @@ if st.button("🔮 Predict Churn", type="primary"):
 
                     if churn == 1:
                         st.metric(
-                            label="Churn Prediction",
+                            label="Predicted churn class",
                             value="YES ❌",
-                            delta=f"Probability: {prob:.2%}",
+                            delta=None,
                         )
                     else:
                         st.metric(
-                            label="Churn Prediction",
+                            label="Predicted churn class",
                             value="NO ✅",
-                            delta=f"Probability: {prob:.2%}",
+                            delta=None,
                         )
+
+                    st.metric("Model churn score", f"{prob:.2%}")
+                    st.caption("Model scores are not calibrated guarantees or causal explanations.")
 
                     with st.expander("📋 View Input Summary"):
                         st.json(user_input)
 
 st.markdown("---")
-st.caption(
-    f"🌐 API: `{API_BASE_URL}`  \n"
-    f"📁 Schema: `{SCHEMA_PATH}`"
-)
+with st.expander("Connection details"):
+    st.code(API_BASE_URL)

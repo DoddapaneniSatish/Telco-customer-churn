@@ -13,10 +13,8 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # 2. Copy Streamlit app
-COPY app.py .
+COPY app.py data_schema.json ./
 
-# 3. Ensure data dir exists (will be mounted from host)
-RUN mkdir -p /app/data
 
 EXPOSE 8501
 
