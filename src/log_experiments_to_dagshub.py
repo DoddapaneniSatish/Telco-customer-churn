@@ -17,7 +17,7 @@ if "DAGSHUB_TOKEN" not in os.environ:
     raise RuntimeError(
         "❌ DAGSHUB_TOKEN not found.\n\n"
         "Please set it first:\n"
-        "$env:DAGSHUB_TOKEN='412c323c30f6cf4535e92330412f0faf0ffb1727'\n"
+        "$env:DAGSHUB_TOKEN='<your-token>'\n"
     )
 
 # --------------------------------------------------
